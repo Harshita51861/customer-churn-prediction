@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retainly — Retention Risk Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14201A;
+    --bg-alt: #101A15;
+    --panel: #1C2B22;
+    --panel-alt: #101A15;
+    --hero: #182620;
+    --border: #34493C;
+    --text: #ECE6D6;
+    --text-muted: #90A296;
+    --accent: #A67C3D;
+    --accent-soft: #3A3222;
+    --risk-low: #6FA06B;
+    --risk-mid: #D3A93B;
+    --risk-high: #BD5A34;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { font-size: 16px; }
+
+  body {
+    margin: 0;
+    font-family: 'Lora', serif;
+    background-color: var(--bg);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(236,230,214,0.025) 0px,
+      rgba(236,230,214,0.025) 1px,
+      transparent 1px,
+      transparent 34px
+    );
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'Space Mono', monospace; }
+
+  .section-inner {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+
+  /* ---- HERO (full width) ---- */
+  .hero {
+    background: var(--hero);
+    border-bottom: 3px double var(--border);
+  }
+  .hero .section-inner { padding-top: 40px; padding-bottom: 28px; }
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 600;
+    font-style: italic;
+    margin: 0;
+    color: var(--text);
+  }
+  .hero h1 span { color: var(--accent); font-style: normal; }
+  .hero p.tagline {
+    margin: 10px 0 0;
+    font-size: 16px;
+    color: var(--text-muted);
+    max-width: 620px;
+    line-height: 1.6;
+  }
+
+  .stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 30px;
+    border-top: 1px solid var(--border);
+    padding-top: 22px;
+  }
+  .stat-item {
+    flex: 1 1 160px;
+    padding: 0 24px;
+    border-left: 1px solid var(--border);
+  }
+  .stat-item:first-child { border-left: none; padding-left: 0; }
+  .stat-item .sv {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-item .sl {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* ---- NAV ---- */
+  nav.tabs {
+    background: var(--panel-alt);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.tabs .section-inner { display: flex; gap: 30px; padding-top: 0; padding-bottom: 0; }
+  nav.tabs button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 15.5px;
+    padding: 15px 0;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+  }
+  nav.tabs button:hover { color: var(--text); }
+  nav.tabs button.active {
+    color: var(--text);
+    border-bottom: 3px solid var(--accent);
+    font-style: normal;
+    font-weight: 600;
+  }
+  nav.tabs button:focus-visible,
+  select:focus-visible, input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---- MAIN ---- */
+  main .section-inner { padding-top: 34px; padding-bottom: 70px; }
+
+  .tabpanel { display: none; }
+  .tabpanel.active { display: block; }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 26px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+  }
+
+  .section-label {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--text);
+    padding-bottom: 7px;
+    margin: 28px 0 16px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .section-label::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: var(--border);
+    margin-top: 4px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+
+  label {
+    display: block;
+    font-family: 'Lora', serif;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  select, input[type="number"], input[type="file"] {
+    width: 100%;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 12px 13px;
+    font-family: 'Lora', serif;
+    font-size: 16px;
+  }
+  input[type="number"] { font-family: 'Space Mono', monospace; }
+  select { cursor: pointer; }
+  .field { margin-bottom: 4px; }
+
+  button.primary {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--accent);
+    color: #16130A;
+    border: none;
+    border-radius: 3px;
+    font-family: 'Lora', serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.primary:hover { background: #BB8E4C; }
+
+  .readout { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 22px; }
+  .readout .placeholder {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.75;
+    font-style: italic;
+  }
+
+  .stats-panel h3 {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 15px;
+    color: var(--text-muted);
+    margin: 0 0 15px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px dotted var(--border);
+    font-size: 15px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .sval { color: var(--accent); }
+
+  .statement-head {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 5px;
+  }
+  .balance-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 11px;
+    border-bottom: 4px double var(--accent);
+    margin-bottom: 20px;
+  }
+  .balance-line .verdict { font-size: 17px; font-weight: 600; }
+  .balance-line .pct { font-size: 32px; font-weight: 700; }
+
+  .readout-enter { animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .readout-enter { animation: none !important; }
+  }
+
+  .factors h3, .rec h3 {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin: 0 0 11px;
+  }
+  .factor-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--border);
+    font-size: 15px;
+  }
+  .factor-row .fname { color: var(--text); }
+  .factor-row .famt { display: flex; align-items: baseline; gap: 9px; }
+  .tag {
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .tag.dr { background: #3A241C; color: var(--risk-high); }
+  .tag.cr { background: #1E2E22; color: var(--risk-low); }
+
+  .rec {
+    margin-top: 22px;
+    padding: 15px 17px;
+    background: var(--accent-soft);
+    border: 1px solid #4E4025;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #F0DEB8;
+    font-style: italic;
+  }
+
+  .dropzone {
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 30px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+  .dropzone input { margin-top: 14px; }
+  .schema-note {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .schema-note code {
+    background: var(--panel-alt);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 22px;
+  }
+  .compare-box {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px;
+  }
+  .compare-box .cb-label { font-size: 13px; font-style: italic; color: var(--text-muted); }
+  .compare-box .cb-value { font-size: 28px; font-weight: 700; margin-top: 7px; }
+  .delta-line { margin-top: 18px; text-align: center; font-size: 16px; font-weight: 600; font-style: italic; }
+
+  /* ---- FOOTER (full width) ---- */
+  footer.site {
+    background: var(--bg-alt);
+    border-top: 3px double var(--border);
+  }
+  footer.site .section-inner {
+    padding-top: 30px;
+    padding-bottom: 34px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  footer.site .stack-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  footer.site .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 9px;
+  }
+  footer.site .credit {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    max-width: 420px;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .field-grid { grid-template-columns: 1fr; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .readout { position: static; }
+    .stat-item { border-left: none !important; padding-left: 0 !important; flex-basis: 45%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="section-inner">
+    <h1>Retainly</h1>
+    <p class="tagline">A retention risk console built on the IBM Telco Customer Churn dataset. Every reading is explained line by line using SHAP attribution, not just handed back as a bare probability.</p>
+
+    <div class="stat-strip">
+      <div class="stat-item">
+        <div class="sv mono">7,043</div>
+        <div class="sl">customers analyzed</div>
+      </div>
+      <div class="stat-item">
+        <div class="sv mono">0.841</div>
+        <div class="sl">test ROC-AUC</div>
+      </div>
+      <div class="stat-item">
+        <div class="sv mono">86.6%</div>
+        <div class="sl">recall on churners</div>
+      </div>
+      <div class="stat-item">
+        <div class="sv mono">3</div>
+        <div class="sl">models compared</div>
+      </div>
+      <div class="stat-item">
+        <div class="sv mono">SHAP</div>
+        <div class="sl">explanation method</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs">
+  <div class="section-inner">
+    <button class="tab-btn active" data-tab="single">Single customer</button>
+    <button class="tab-btn" data-tab="batch">Batch file</button>
+    <button class="tab-btn" data-tab="whatif">What if</button>
+  </div>
+</nav>
+
+<main>
+<div class="section-inner">
+
+  <!-- SINGLE CUSTOMER TAB -->
+  <section class="tabpanel active" id="tab-single">
+    <div class="split">
+
+      <div class="panel">
+        <div class="section-label">Account details</div>
+        <div class="field-grid">
+          <div class="field"><label>Gender</label>
+            <select id="gender"><option>Female</option><option>Male</option></select></div>
+          <div class="field"><label>Senior citizen</label>
+            <select id="SeniorCitizen"><option value="0">No</option><option value="1">Yes</option></select></div>
+          <div class="field"><label>Partner</label>
+            <select id="Partner"><option>No</option><option>Yes</option></select></div>
+          <div class="field"><label>Dependents</label>
+            <select id="Dependents"><option>No</option><option>Yes</option></select></div>
+        </div>
+        <div class="field" style="margin-top:14px;">
+          <label>Tenure (months)</label>
+          <input type="number" id="tenure" value="2">
+        </div>
+
+        <div class="section-label">Services on file</div>
+        <div class="field-grid">
+          <div class="field"><label>Phone service</label>
+            <select id="PhoneService"><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Multiple lines</label>
+            <select id="MultipleLines"><option>No</option><option>Yes</option><option>No phone service</option></select></div>
+          <div class="field"><label>Internet service</label>
+            <select id="InternetService"><option>Fiber optic</option><option>DSL</option><option>No</option></select></div>
+          <div class="field"><label>Online security</label>
+            <select id="OnlineSecurity"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+          <div class="field"><label>Online backup</label>
+            <select id="OnlineBackup"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+          <div class="field"><label>Device protection</label>
+            <select id="DeviceProtection"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+          <div class="field"><label>Tech support</label>
+            <select id="TechSupport"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+          <div class="field"><label>Streaming TV</label>
+            <select id="StreamingTV"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+          <div class="field"><label>Streaming movies</label>
+            <select id="StreamingMovies"><option>No</option><option>Yes</option><option>No internet service</option></select></div>
+        </div>
+
+        <div class="section-label">Billing details</div>
+        <div class="field-grid">
+          <div class="field"><label>Contract</label>
+            <select id="Contract"><option>Month-to-month</option><option>One year</option><option>Two year</option></select></div>
+          <div class="field"><label>Paperless billing</label>
+            <select id="PaperlessBilling"><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Payment method</label>
+            <select id="PaymentMethod">
+              <option>Electronic check</option><option>Mailed check</option>
+              <option>Bank transfer (automatic)</option><option>Credit card (automatic)</option>
+            </select></div>
+          <div class="field"><label>Monthly charges ($)</label>
+            <input type="number" step="0.01" id="MonthlyCharges" value="85.5"></div>
+          <div class="field"><label>Total charges ($)</label>
+            <input type="number" step="0.01" id="TotalCharges" value="171.0"></div>
+        </div>
+
+        <button class="primary" onclick="predict()">Generate risk statement</button>
+      </div>
+
+      <div class="readout">
+        <div class="panel" id="readoutPanel">
+          <div class="placeholder" id="readoutPlaceholder">
+            Enter a customer's details and generate a statement. The reading, the entries behind it, and a suggested action will appear here.
+          </div>
+          <div id="readoutContent" style="display:none;"></div>
+        </div>
+
+        <div class="panel stats-panel">
+          <h3>Model at a glance</h3>
+          <div class="stat-row"><span>Training records</span><span class="sval mono">7,043</span></div>
+          <div class="stat-row"><span>Model</span><span class="sval mono">Logistic Regression</span></div>
+          <div class="stat-row"><span>Test ROC-AUC</span><span class="sval mono">0.841</span></div>
+          <div class="stat-row"><span>Baseline churn rate</span><span class="sval mono">26.5%</span></div>
+          <div class="stat-row"><span>Decision threshold</span><span class="sval mono">0.40</span></div>
+          <div class="stat-row"><span>Explanation method</span><span class="sval mono">SHAP (linear)</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BATCH TAB -->
+  <section class="tabpanel" id="tab-batch">
+    <div class="panel" style="max-width:680px;">
+      <div class="section-label">Batch file</div>
+      <p style="font-size:15px; color:var(--text-muted); margin-top:0;">
+        Upload a customer list to draw up a statement for the whole book at once. Rows return ranked by churn probability, highest risk first.
+      </p>
+      <div class="dropzone">
+        Choose a CSV file
+        <br>
+        <input type="file" id="csvFile" accept=".csv">
+      </div>
+      <div class="schema-note">
+        Required columns: <code>gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService, MultipleLines,
+        InternetService, OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport, StreamingTV, StreamingMovies,
+        Contract, PaperlessBilling, PaymentMethod, MonthlyCharges, TotalCharges</code>
+      </div>
+      <button class="primary" onclick="predictBatch()">Score customer file</button>
+      <div id="batchStatus" style="margin-top:16px; font-size:15px; color:var(--text-muted); font-style:italic;"></div>
+    </div>
+  </section>
+
+  <!-- WHAT-IF TAB -->
+  <section class="tabpanel" id="tab-whatif">
+    <div class="panel" style="max-width:680px;">
+      <div class="section-label">What if</div>
+      <p style="font-size:15px; color:var(--text-muted); margin-top:0;">
+        Uses the customer entered under Single customer. Amend one line and see how the balance shifts.
+      </p>
+      <div class="field-grid">
+        <div class="field">
+          <label>Field to amend</label>
+          <select id="whatIfField" onchange="updateWhatIfOptions()">
+            <option value="Contract">Contract</option>
+            <option value="TechSupport">Tech support</option>
+            <option value="OnlineSecurity">Online security</option>
+            <option value="InternetService">Internet service</option>
+            <option value="PaperlessBilling">Paperless billing</option>
+            <option value="PaymentMethod">Payment method</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Revised value</label>
+          <select id="whatIfValue"></select>
+        </div>
+      </div>
+      <button class="primary" onclick="runWhatIf()">Compare revised entry</button>
+
+      <div id="whatIfResult" style="display:none;">
+        <div class="compare-grid">
+          <div class="compare-box">
+            <div class="cb-label">Original entry</div>
+            <div class="cb-value mono" id="whatIfBefore">—</div>
+          </div>
+          <div class="compare-box">
+            <div class="cb-label">Revised entry</div>
+            <div class="cb-value mono" id="whatIfAfter">—</div>
+          </div>
+        </div>
+        <div class="delta-line" id="whatIfDelta"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer class="site">
+  <div class="section-inner">
+    <div class="credit">
+      Built as an end-to-end retention analytics project: data cleaning, model comparison, threshold tuning, SHAP explainability, batch scoring, and a what-if simulator, served through a FastAPI backend.
+    </div>
+    <div class="stack-badges">
+      <span class="badge">Python</span>
+      <span class="badge">scikit-learn</span>
+      <span class="badge">XGBoost</span>
+      <span class="badge">SHAP</span>
+      <span class="badge">FastAPI</span>
+      <span class="badge">pandas</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const API_URL = "http://127.0.0.1:8000/predict";
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpanel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  function riskColor(level) {
+    if (level === "High") return "var(--risk-high)";
+    if (level === "Medium") return "var(--risk-mid)";
+    return "var(--risk-low)";
+  }
+
+  function getCurrentPayload() {
+    return {
+      gender: document.getElementById("gender").value,
+      SeniorCitizen: parseInt(document.getElementById("SeniorCitizen").value),
+      Partner: document.getElementById("Partner").value,
+      Dependents: document.getElementById("Dependents").value,
+      tenure: parseInt(document.getElementById("tenure").value),
+      PhoneService: document.getElementById("PhoneService").value,
+      MultipleLines: document.getElementById("MultipleLines").value,
+      InternetService: document.getElementById("InternetService").value,
+      OnlineSecurity: document.getElementById("OnlineSecurity").value,
+      OnlineBackup: document.getElementById("OnlineBackup").value,
+      DeviceProtection: document.getElementById("DeviceProtection").value,
+      TechSupport: document.getElementById("TechSupport").value,
+      StreamingTV: document.getElementById("StreamingTV").value,
+      StreamingMovies: document.getElementById("StreamingMovies").value,
+      Contract: document.getElementById("Contract").value,
+      PaperlessBilling: document.getElementById("PaperlessBilling").value,
+      PaymentMethod: document.getElementById("PaymentMethod").value,
+      MonthlyCharges: parseFloat(document.getElementById("MonthlyCharges").value),
+      TotalCharges: parseFloat(document.getElementById("TotalCharges").value)
+    };
+  }
+
+  async function predict() {
+    const payload = getCurrentPayload();
+    const placeholder = document.getElementById("readoutPlaceholder");
+    const content = document.getElementById("readoutContent");
+
+    placeholder.style.display = "none";
+    content.style.display = "block";
+    content.innerHTML = "Drawing up the statement...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      const color = riskColor(data.risk_level);
+      const pct = (data.churn_probability * 100).toFixed(1);
+
+      const factorsHtml = data.top_factors.map(f => {
+        const isDebit = f.direction === "increases risk";
+        const tagClass = isDebit ? "dr" : "cr";
+        const tagText = isDebit ? "Dr" : "Cr";
+        const amtColor = isDebit ? "var(--risk-high)" : "var(--risk-low)";
+        const sign = isDebit ? "+" : "\u2212";
+        return `
+          <div class="factor-row">
+            <span class="fname">${f.factor}</span>
+            <span class="famt">
+              <span class="tag ${tagClass}">${tagText}</span>
+              <span class="mono" style="color:${amtColor};">${sign}${Math.abs(f.impact).toFixed(3)}</span>
+            </span>
+          </div>`;
+      }).join("");
+
+      content.innerHTML = `
+        <div class="readout-enter">
+          <div class="statement-head">Risk statement</div>
+          <div class="balance-line">
+            <span class="verdict" style="color:${color}">${data.churn_prediction} — ${data.risk_level} risk</span>
+            <span class="pct mono" style="color:${color}">${pct}%</span>
+          </div>
+
+          <div class="factors">
+            <h3>Entries behind this reading</h3>
+            ${factorsHtml}
+          </div>
+
+          <div class="rec">${data.recommendation}</div>
+        </div>`;
+    } catch (err) {
+      content.innerHTML = "Could not reach the API. Check the console for details.";
+      console.error(err);
+    }
+  }
+
+  async function predictBatch() {
+    const fileInput = document.getElementById("csvFile");
+    const statusDiv = document.getElementById("batchStatus");
+
+    if (!fileInput.files.length) {
+      statusDiv.innerText = "Choose a CSV file first.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    statusDiv.innerText = "Scoring the file...";
+
+    try {
+      const res = await fetch(API_URL.replace("/predict", "/predict-batch"), {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        statusDiv.innerText = "Could not score the file. Check that column names match the required format.";
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "churn_predictions.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      statusDiv.innerText = "Done — churn_predictions.csv downloaded, ranked by risk.";
+    } catch (err) {
+      statusDiv.innerText = "Could not reach the API.";
+      console.error(err);
+    }
+  }
+
+  const WHAT_IF_OPTIONS = {
+    Contract: ["Month-to-month", "One year", "Two year"],
+    TechSupport: ["No", "Yes", "No internet service"],
+    OnlineSecurity: ["No", "Yes", "No internet service"],
+    InternetService: ["Fiber optic", "DSL", "No"],
+    PaperlessBilling: ["Yes", "No"],
+    PaymentMethod: ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"]
+  };
+
+  function updateWhatIfOptions() {
+    const field = document.getElementById("whatIfField").value;
+    const valueSelect = document.getElementById("whatIfValue");
+    valueSelect.innerHTML = "";
+    WHAT_IF_OPTIONS[field].forEach(opt => {
+      const el = document.createElement("option");
+      el.value = opt;
+      el.textContent = opt;
+      valueSelect.appendChild(el);
+    });
+  }
+
+  async function runWhatIf() {
+    const baselinePayload = getCurrentPayload();
+    const field = document.getElementById("whatIfField").value;
+    const newValue = document.getElementById("whatIfValue").value;
+    const modifiedPayload = { ...baselinePayload, [field]: newValue };
+
+    const resultDiv = document.getElementById("whatIfResult");
+    resultDiv.style.display = "block";
+    document.getElementById("whatIfBefore").innerText = "···";
+    document.getElementById("whatIfAfter").innerText = "···";
+    document.getElementById("whatIfDelta").innerText = "";
+
+    try {
+      const [beforeRes, afterRes] = await Promise.all([
+        fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baselinePayload) }),
+        fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(modifiedPayload) })
+      ]);
+      const before = await beforeRes.json();
+      const after = await afterRes.json();
+
+      const beforeProb = before.churn_probability * 100;
+      const afterProb = after.churn_probability * 100;
+      const delta = afterProb - beforeProb;
+
+      document.getElementById("whatIfBefore").innerText = beforeProb.toFixed(1) + "%";
+      document.getElementById("whatIfAfter").innerText = afterProb.toFixed(1) + "%";
+
+      const deltaDiv = document.getElementById("whatIfDelta");
+      if (delta < -0.05) {
+        deltaDiv.style.color = "var(--risk-low)";
+        deltaDiv.innerText = `Balance improves by ${Math.abs(delta).toFixed(1)} points`;
+      } else if (delta > 0.05) {
+        deltaDiv.style.color = "var(--risk-high)";
+        deltaDiv.innerText = `Balance worsens by ${delta.toFixed(1)} points`;
+      } else {
+        deltaDiv.style.color = "var(--text-muted)";
+        deltaDiv.innerText = "No meaningful change";
+      }
+    } catch (err) {
+      document.getElementById("whatIfBefore").innerText = "Error";
+      document.getElementById("whatIfAfter").innerText = "Error";
+      console.error(err);
+    }
+  }
+
+  updateWhatIfOptions();
+</script>
+</body>
+</html>
